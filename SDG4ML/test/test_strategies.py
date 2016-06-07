@@ -3,25 +3,29 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from SDG4ML.core import strategies
+from SDG4ML.core import strategies as st
 
 def main():
-    # x,y = strategies.null(n=5, d=3, normalized=False, seed=42)
-    # x, y, beta = strategies.sparse(n=5, d=10, k=3, amplitude=3.5, normalized=True, seed=42)
-    # x, y, beta = strategies.correlated(n=300, d=100, k=5, rho=0.85, amplitude=3.5, sigma= 0.5, normalized=True)#, seed=42)
-    x, y, beta = strategies.block_correlated(n=300, d=100, k=30, rho=0.95, amplitude=3.5, sigma= 0.5, normalized=True)#, seed=42)
 
-    print("data:\n{}".format(x.shape))
-    print("labels:\n{}".format(y.shape))
-    print("beta:\n{}".format(beta.shape))
+    # problems
+    kwargs = {'n': 100, 'd': 300, 'k': 15, 'rho': 0.5,
+              'amplitude': 3.5, 'normalized': False, 'seed': 42}
+    strategies = ['null', 'sparse', 'correlated', 'block_correlated', 'zou_hastie_2005d']
 
-    plt.imshow(x.T.dot(x))
-    plt.colorbar()
-    plt.show()
+    # Test all strategies
+    for s in strategies:
+        x, y, beta = st.wrapper(strategy=s, **kwargs)
 
+        print("\n***************************************************************")
+        print("Strategy: {}".format(s))
+        print("data:\n{}".format(x.shape))
+        print("labels:\n{}".format(y.shape))
+        print("beta:\n{}".format(beta.shape))
 
-
-
+        plt.imshow(x.T.dot(x))
+        plt.colorbar()
+        plt.title('strategy: '+str(s))
+        plt.show()
 
 if __name__ == '__main__':
     main()
