@@ -2,13 +2,21 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import matplotlib.pyplot as plt
 from SDG4ML.core import strategies
 
 def main():
-    x,y = strategies.null(n=5, d=3, normalized=False, seed=42)
+    # x,y = strategies.null(n=5, d=3, normalized=False, seed=42)
+    # x, y, beta = strategies.sparse(n=5, d=10, k=3, amplitude=3.5, normalized=True, seed=42)
+    x, y, beta = strategies.correlated(n=300, d=100, k=5, rho=0.85, amplitude=3.5, sigma= 0.5, normalized=True)#, seed=42)
 
-    print("data : {}".format(x))
-    print("labels : {}".format(y))
+    print("data:\n{}".format(x))
+    print("labels:\n{}".format(y))
+    print("beta:\n{}".format(beta))
+
+    plt.imshow(x.T.dot(x))
+    plt.colorbar()
+    plt.show()
 
 
 
