@@ -118,7 +118,7 @@ def correlated(n=100, d=150, k=15, rho=0.5, amplitude=3.5, sigma=0.5, normalized
 
                                             Y = X*beta + noise
 
-    where X ~ multi variate Gaussian (0, THETA), THETA is a matrix that has THETA_jk = rhp^abs(j-k), beta is sparse and the nonzero values are in {+-amplitude}, noise ~ N(0,sigma).
+    where X ~ multi variate random Gaussian (0, THETA), THETA is a (d,d) matrix that has THETA[j,k] = rho^abs(j-k), beta is sparse and the nonzero values are in {+-amplitude}, noise ~ N(0,sigma).
 
     Parameters
     ----------
@@ -178,8 +178,73 @@ def correlated(n=100, d=150, k=15, rho=0.5, amplitude=3.5, sigma=0.5, normalized
     return X, Y, beta
 
 
-def block_correlated():
-    pass
+def block_correlated(n=100, d=150, k=15, rho=0.5, amplitude=3.5, sigma=0.5, normalized=False, seed=None, **kwargs):
+    """
+    Generate a linear regression (X,Y) problem. The relationship between input and output is given by:
+
+                                            Y = X*beta + noise
+
+    where X is made by stacking on the rows a multi variate random Gaussian (0, THETA) of shape (n,k) with a single variate random Gaussian of shape (n,d-k), THETA is a (d,d) matrix that has THETA[j,k] = rho^abs(j-k), beta is sparse and the nonzero values are in {+-amplitude}, noise ~ N(0,sigma).
+
+    Parameters
+    ----------
+    n : int, optional (default is `100`)
+        number of samples
+    d : int, optional (default is `150`)
+        total number of dimensions
+    k : int, optional (default is `15`)
+        number of relevant dimensions
+    rho : float, optional (default is `0.5`)
+        correlation level
+    amplitude : float,  optional (default is `3.5`)
+        amplitude of the generative linear model
+    sigma : float, optional (default is `0.5`)
+        Gaussian noise std
+    normalized : bool, optional (default is `False`)
+        if normalized is true than the data matrix is normalized as data/sqrt(n)
+    seed : float, optional (default is `None`)
+        random seed initialization
+
+    Returns
+    -------
+    X : (n, d) ndarray
+        data matrix
+    Y : (n, 1) ndarray
+        label vector
+    beta : (d, 1) ndarray
+        real beta vector
+    """
+    if seed is not None:
+        state0 = np.random.get_state()
+        np.random.seed(seed)
+
+    if normalized:
+        factor = np.sqrt(n)
+    else:
+        factor = 1
+
+    # Create covariance matrix
+    THETA = np.zeros((k,k))
+    for i in range(k):
+        for j in range(k):
+            THETA[i,j] = rho**np.abs(i-j)
+
+    Xleft = np.random.multivariate_normal(mean=np.zeros(k), cov=THETA, size=(n))
+    Xright = np.random.randn(n,d-k)
+    X = np.hstack((Xleft,Xright))/factor
+
+    beta = np.zeros(d)                         # init beta vector
+    S0 = np.random.choice(d, k, replace=False) # extract k indexes from d
+    beta[S0] = amplitude                       # set them to amplitude
+    beta *= np.sign(np.random.randn(d))        # with random sign
+
+    Y = X.dot(beta) + sigma * np.random.randn(n) # evaluate labels
+
+    if seed is not None: # restore random seed
+        np.random.set_state(state0)
+
+    return X, Y, beta
+
 
 def zou_hastie_2005d():
     pass
