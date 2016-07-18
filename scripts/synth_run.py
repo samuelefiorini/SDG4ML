@@ -65,24 +65,24 @@ if __name__ == '__main__':
 
     parser.add_argument("-n", dest="n", action="store",
                         help="number of samples (default = 100)",
-                        default=100)
+                        default=100, type=int)
     parser.add_argument("-d", dest="d", action="store",
                         help="total number of dimensions (default = 150)",
-                        default=150)
+                        default=150, type=int)
     parser.add_argument("-k", dest="k", action="store",
                         help="number of relevant dimensions (default = 15)",
-                        default=15)
+                        default=15, type=int)
     parser.add_argument("-rho", dest="rho", action="store",
                         help="correlation level (default = 0.5)",
-                        default=0.5)
+                        default=0.5, type=float)
     parser.add_argument("-n_classes", dest="n_classes", action="store",
                         help="number of classes (default = 2), valid only for"
                         "multivariate_groups strategy",
-                        default=2)
+                        default=2, type=int)
     parser.add_argument("-amplitude", dest="amplitude", action="store",
                         help="amplitude of the generative linear model"
                         "(default = 3.5)",
-                        default=3.5)
+                        default=3.5, type=float)
     parser.add_argument("-normalized", dest="normalized", action="store_false",
                         help="normalized data as data/sqrt(n)")
     parser.add_argument("-seed", dest="seed", action="store",

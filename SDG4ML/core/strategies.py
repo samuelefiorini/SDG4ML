@@ -356,23 +356,31 @@ def zou_hastie_2005d(n=100, d=150, k=15, amplitude=3.5, sigma=0.5,
     return X, Y, beta
 
 
-def multivariate_groups(n=100, d=150, k=15, n_classes=2, means=None, cov=None):
+def multivariate_groups(n=100, d=150, k=15, rho=0.5, n_classes=2, means=None,
+                        cov=None, normalized=False, seed=None, **kwargs):
     """Sample random points from multivariate gaussians distribution.
 
     Parameters
     ----------
     n : int, optional (default is `100`)
-        number of samples
+        total number of samples
     d : int, optional (default is `150`)
         total number of dimensions
     k : int, optional (default is `15`)
         number of relevant dimensions
+    rho : float, optional (default is `0.5`)
+        correlation level
     n_classes : int, optional (default is `2`)
-        number of classes
+        number of classes in which n are grouped
     means : array (n_classes, k), optional (default is fixed)
         the means of the multivariate gaussian distribution
     cov : array (n_classes, k, k), optional (default is fixed)
         the covariances of the multivariate gaussian distribution
+    normalized : bool, optional (default is `False`)
+        if normalized is true than the data matrix is normalized as
+        data/sqrt(n)
+    seed : float, optional (default is `None`)
+        random seed initialization
 
     Returns
     -------
@@ -381,4 +389,59 @@ def multivariate_groups(n=100, d=150, k=15, n_classes=2, means=None, cov=None):
     Y : (n, 1) ndarray
         label vector
     """
-    pass
+    if seed is not None:
+        state0 = np.random.get_state()
+        np.random.seed(seed)
+
+    if normalized:
+        factor = np.sqrt(n)
+    else:
+        factor = 1
+
+    # Define the number of samples for each group
+    samples_per_class = [int(n / n_classes) for j in range(n_classes)]
+    samples_per_class[-1] += n - sum(samples_per_class)
+
+    # Define default values for means and cov
+    if means is None:
+        means = list()
+        for j in range(n_classes):
+            means.append(np.ones(k) * j)
+
+    if cov is None:
+        theta_list = list()
+        for j in range(n_classes):
+            theta = np.zeros((k, k))
+            for r in range(k):
+                for c in range(k):
+                    theta[r, c] = rho**np.abs(r-c)
+            theta_list.append(theta)
+
+    # Create the relevant samples (first class, then the others)
+    X = np.random.multivariate_normal(mean=means[0],
+                                      cov=theta_list[0],
+                                      size=(samples_per_class[0],))
+    for j in range(1, n_classes):
+        xx = np.random.multivariate_normal(mean=means[j],
+                                           cov=theta_list[j],
+                                           size=(samples_per_class[j]))
+        X = np.vstack((X, xx))
+
+    # Add noise
+    noise = np.random.randn(n, d - k)
+    X = np.hstack((X, noise)) / factor
+
+    # Generate labels
+    y = list()
+    for i, j in enumerate(samples_per_class):
+        y.extend(j * [i])
+    y = np.array(y)
+
+    # check if binary classification
+    if len(np.unique(y)) == 2:
+        y = 2 * np.array(y) - 1
+
+    if seed is not None:  # restore random seed
+        np.random.set_state(state0)
+
+    return X, y, None
