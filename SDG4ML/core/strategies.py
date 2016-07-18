@@ -1,26 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-    Strategies for synthetic regression problems generation.
+"""Strategies for synthetic regression problems generation.
 
-    IMPLEMTENTED STRATEGIES:
+IMPLEMETENTED STRATEGIES:
 
-    - NULL: regression problem with no signal, random labels uncorrelated with
-            data.
-    - SPARSE: sparse linear regression problem
-              y = univ_random_X*sparse_beta + noise.
-    - CORRELATED: linearly correlated regression problem
-              y = multiv_random_X*sparse_beta + noise.
-    - BLOCK CORRELATED: linearly block correlated regression problem
-              y = multiv_random_X*block_sparse_beta + noise.
-    - ZOU HASTIE 2005d: regression problem as in Zou Hastie 2005 (d) scenario.
-    - MULTIVARIATE GROUPS: classification problem, each point is sampled from
-                           a multivariate normal distribution.
+- NULL: regression problem with no signal, random labels uncorrelated with
+        data.
+- SPARSE: sparse linear regression problem
+          y = univ_random_X*sparse_beta + noise.
+- CORRELATED: linearly correlated regression problem
+          y = multiv_random_X*sparse_beta + noise.
+- BLOCK CORRELATED: linearly block correlated regression problem
+          y = multiv_random_X*block_sparse_beta + noise.
+- ZOU HASTIE 2005d: regression problem as in Zou Hastie 2005 (d) scenario.
+- MULTIVARIATE GROUPS: classification problem, each point is sampled from
+                       a multivariate normal distribution.
 
-    REF:
+REF:
 
-    Zou and Hastie (2005), Regularization and variable selection via the
-    elastic net.
+Zou and Hastie (2005), Regularization and variable selection via the
+elastic net.
 """
 from __future__ import division
 import numpy as np
@@ -357,27 +356,29 @@ def zou_hastie_2005d(n=100, d=150, k=15, amplitude=3.5, sigma=0.5,
     return X, Y, beta
 
 
-def wrapper(strategy='sparse', **kwargs):
-    """Wrapper that let you generate a regression problem according to several
-    strategies (see docstrings for further details).
+def multivariate_groups(n=100, d=150, k=15, n_classes=2, means=None, cov=None):
+    """Sample random points from multivariate gaussians distribution.
 
     Parameters
     ----------
-    strategy : str, optional (default is `sparse`)
-        data generation strategy, this can be either 'null', 'sparse',
-        'correlated', 'block_correlated' or 'zou_hastie_2005d'.
+    n : int, optional (default is `100`)
+        number of samples
+    d : int, optional (default is `150`)
+        total number of dimensions
+    k : int, optional (default is `15`)
+        number of relevant dimensions
+    n_classes : int, optional (default is `2`)
+        number of classes
+    means : array (n_classes, k), optional (default is fixed)
+        the means of the multivariate gaussian distribution
+    cov : array (n_classes, k, k), optional (default is fixed)
+        the covariances of the multivariate gaussian distribution
+
+    Returns
+    -------
+    X : (n, d) ndarray
+        data matrix
+    Y : (n, 1) ndarray
+        label vector
     """
-    if strategy.lower() == 'null':
-        return null(**kwargs)
-    elif strategy.lower() == 'sparse':
-        return sparse(**kwargs)
-    elif strategy.lower() == 'correlated':
-        return correlated(**kwargs)
-    elif strategy.lower() == 'block_correlated':
-        return block_correlated(**kwargs)
-    elif strategy.lower() == 'zou_hastie_2005d':
-        return zou_hastie_2005d(**kwargs)
-    else:
-        print("{} is not a valid strategy. Accepted strategies are: 'null', \
-              'sparse', 'correlated', 'block_correlated' or \
-              'zou_hastie_2005d'.")
+    pass
