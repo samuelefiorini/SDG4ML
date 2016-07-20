@@ -15,6 +15,8 @@
 """
 from __future__ import division
 import numpy as np
+from sklearn.preprocessing import PolynomialFeatures, FunctionTransformer
+
 
 def null(n=100, d=150, normalized=False, seed=None, **kwargs):
     """Generate a signal-less {X,Y} dataset with data and labels completely uncorrelated.
@@ -55,7 +57,7 @@ def null(n=100, d=150, normalized=False, seed=None, **kwargs):
     return X, Y, np.zeros(d)
 
 
-def sparse(n=100, d=150, k=15, amplitude=3.5, sigma=0.5, normalized=False, seed=None, **kwargs):
+def sparse(n=100, d=150, k=15, degree = 1, func = 'l' amplitude=3.5, SNR=0.5, normalized=False, seed=None, **kwargs):
     """Generate a sparse linear regression (X,Y) problem. The relationship between input and output is given by:
 
                                             Y = X*beta + noise
@@ -72,8 +74,8 @@ def sparse(n=100, d=150, k=15, amplitude=3.5, sigma=0.5, normalized=False, seed=
         number of relevant dimensions
     amplitude : float,  optional (default is `3.5`)
         amplitude of the generative linear model
-    sigma : float, optional (default is `0.5`)
-        Gaussian noise std
+    SNR : float, optional (default is `0.5`)
+        sigma_signal/sigma_noise nb: mean(signal)=0. sigma_n or s gaussiano
     normalized : bool, optional (default is `False`)
         if normalized is true than the data matrix is normalized as data/sqrt(n)
     seed : float, optional (default is `None`)
@@ -98,13 +100,36 @@ def sparse(n=100, d=150, k=15, amplitude=3.5, sigma=0.5, normalized=False, seed=
         factor = 1
 
     X = np.random.randn(n,d)/factor            # generate random data
+    
+    if(degree == 1 && func == 'l') :
+        X_trans = X
+    
+    elif(degree ~= 1): #############
+        poly = PolynomialFeatures(degree = 2)
+        X_trans = poly.fit_transform(X)  
 
-    beta = np.zeros(d)                         # init beta vector
-    S0 = np.random.choice(d, k, replace=False) # extract k indexes from d
+    if(func == 'log'):
+        log = FunctionTrasformer(np.log1p) #log(1+x)
+        X_trans = log.fit_transform(log)
+    
+    if(func == 'gaus'):
+        gaus = FunctionTransformer(np.exp)   #verificare se exp è element wise
+        X_trans = gaus.fit_transform(X)
+
+    if(func == 'tanh') :
+        tanh = FunctionTransformer(np.tanh)
+        X_trans = log.fit_transform(X)
+
+    beta = np.zeros(d*degree)                         # init beta vector
+    S0 = np.random.choice(d*degree, k, replace=False) # extract k indexes from d
     beta[S0] = amplitude                       # set them to amplitude
-    beta *= np.sign(np.random.randn(d))        # with random sign
+    beta *= np.sign(np.random.randn(d*degree))        # with random sign
 
-    Y = X.dot(beta) + sigma * np.random.randn(n) # evaluate labels
+   # variance_signal = (1/n)*np.dot(X.dot(beta).T,X.dot(beta)) #questa dipenderà dalla dipendenza di Y da X
+    variance_signal = (1/n)*np.dot(X_trans.dot(beta).T, X_trans.dot(beta))
+    sd_noise = np.sqrt(variance_signal/SNR**2)
+
+    Y = X_trans.dot(beta) + sd_noise*np.random.randn(n) # evaluate labels #Y a questo punto dipende dalla funzione
 
     if seed is not None: # restore random seed
         np.random.set_state(state0)
@@ -112,7 +137,7 @@ def sparse(n=100, d=150, k=15, amplitude=3.5, sigma=0.5, normalized=False, seed=
     return X, Y, beta
 
 
-def correlated(n=100, d=150, k=15, rho=0.5, amplitude=3.5, sigma=0.5, normalized=False, seed=None, **kwargs):
+def correlated(n=100, d=150, k=15, rho=0.5, amplitude=3.5, SNR = 10, normalized=False, seed=None, **kwargs):
     """Generate a linear regression (X,Y) problem. The relationship between input and output is given by:
 
                                             Y = X*beta + noise
@@ -131,8 +156,8 @@ def correlated(n=100, d=150, k=15, rho=0.5, amplitude=3.5, sigma=0.5, normalized
         correlation level
     amplitude : float,  optional (default is `3.5`)
         amplitude of the generative linear model
-    sigma : float, optional (default is `0.5`)
-        Gaussian noise std
+    SNR : float, optional (default is `10`)
+        Signal to noise ratio - signal variance on noise variance - from this we can determine sigma noise
     normalized : bool, optional (default is `False`)
         if normalized is true than the data matrix is normalized as data/sqrt(n)
     seed : float, optional (default is `None`)
@@ -156,13 +181,17 @@ def correlated(n=100, d=150, k=15, rho=0.5, amplitude=3.5, sigma=0.5, normalized
     else:
         factor = 1
 
-    # Create covariance matrix
-    THETA = np.zeros((d,d))
+    # Create covariance matrix XXT
+    '''THETA = np.zeros((d,d))
     for i in range(d):
         for j in range(d):
-            THETA[i,j] = rho**np.abs(i-j)
+            THETA[i,j] = rho**np.abs(i-j)'''
+    THETA = np.zeros((n,n))
+        for i in range(n):
+            ############### da qui
 
     X = np.random.multivariate_normal(mean=np.zeros(d), cov=THETA, size=(n))/factor
+    
 
     beta = np.zeros(d)                         # init beta vector
     S0 = np.random.choice(d, k, replace=False) # extract k indexes from d
