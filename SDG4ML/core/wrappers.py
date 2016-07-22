@@ -13,7 +13,7 @@ def generate_data(strategy='sparse', **kwargs):
     ----------
     strategy : str, optional (default is `sparse`)
         data generation strategy, this can be either 'null', 'sparse',
-        'correlated', 'block_correlated' or 'zou_hastie_2005d'.
+        'correlated', 'block_correlated', 'zou_hastie_2005d' or 'multitask'.
     """
     if strategy.lower() == 'null':
         return st.null(**kwargs)
@@ -27,7 +27,9 @@ def generate_data(strategy='sparse', **kwargs):
         return st.zou_hastie_2005d(**kwargs)
     elif strategy.lower() == 'multivariate_groups':
         return st.multivariate_groups(**kwargs)
+    elif strategy.lower() == 'multitask':
+        return st.multitask(**kwargs)
     else:
         print("{} is not a valid strategy. Accepted strategies are: 'null', \
               'sparse', 'correlated', 'block_correlated', \
-              'zou_hastie_2005d' or 'multivariate_groups'.")
+              'zou_hastie_2005d', 'multivariate_groups' or 'multitask'.")
