@@ -23,6 +23,7 @@ elastic net.
 """
 from __future__ import division
 import numpy as np
+from sklearn.preprocessing import PolynomialFeatures, FunctionTransformer
 
 
 def null(n=100, d=150, normalized=False, seed=None, **kwargs):
@@ -65,7 +66,8 @@ def null(n=100, d=150, normalized=False, seed=None, **kwargs):
     return X, Y, np.zeros(d)
 
 
-def sparse(n=100, d=150, k=15, amplitude=3.5, sigma=0.5, normalized=False,
+def sparse(n=100, d=150, k=15, degree=1, func='l',
+           amplitude=3.5, SNR=0.5, normalized=False,
            seed=None, **kwargs):
     """Generate a sparse linear regression (X,Y) problem.
 
@@ -84,10 +86,14 @@ def sparse(n=100, d=150, k=15, amplitude=3.5, sigma=0.5, normalized=False,
         total number of dimensions
     k : int, optional (default is `15`)
         number of relevant dimensions
+    degree : int, optional (default is `1`)
+        TODO docstring
+    func : str, optional (default is 'l')
+        nonlinear feature mapping, it must be in {'l', 'log', 'gaus', 'tanh'}
     amplitude : float,  optional (default is `3.5`)
         amplitude of the generative linear model
-    sigma : float, optional (default is `0.5`)
-        Gaussian noise std
+    SNR : float, optional (default is `0.5`)
+        sigma_signal/sigma_noise nb: mean(signal)=0. sigma_n or s gaussiano
     normalized : bool, optional (default is `False`)
         if normalized is true than the data matrix is normalized as
         data/sqrt(n)
@@ -114,12 +120,35 @@ def sparse(n=100, d=150, k=15, amplitude=3.5, sigma=0.5, normalized=False,
 
     X = np.random.randn(n, d)/factor            # generate random data
 
-    beta = np.zeros(d)                           # init beta vector
-    S0 = np.random.choice(d, k, replace=False)   # extract k indexes from d
-    beta[S0] = amplitude                         # set them to amplitude
-    beta *= np.sign(np.random.randn(d))          # with random sign
+    if (degree == 1 and func == 'l'):
+        X_trans = X
 
-    Y = X.dot(beta) + sigma * np.random.randn(n)  # evaluate labels
+    elif degree != 1:
+        poly = PolynomialFeatures(degree=2)
+        X_trans = poly.fit_transform(X)
+
+    if func == 'log':
+        log = FunctionTrasformer(np.log1p) #log(1+x)
+        X_trans = log.fit_transform(log)
+
+    if func == 'gaus':
+        gaus = FunctionTransformer(np.exp)   #verificare se exp è element wise
+        X_trans = gaus.fit_transform(X)
+
+    if func == 'tanh':
+        tanh = FunctionTransformer(np.tanh)
+        X_trans = log.fit_transform(X)
+
+    beta = np.zeros(d*degree)                         # init beta vector
+    S0 = np.random.choice(d*degree, k, replace=False) # extract k indexes from d
+    beta[S0] = amplitude                       # set them to amplitude
+    beta *= np.sign(np.random.randn(d*degree))        # with random sign
+
+   # variance_signal = (1/n)*np.dot(X.dot(beta).T,X.dot(beta)) #questa dipenderà dalla dipendenza di Y da X
+    variance_signal = (1/n)*np.dot(X_trans.dot(beta).T, X_trans.dot(beta))
+    sd_noise = np.sqrt(variance_signal/SNR**2)
+
+    Y = X_trans.dot(beta) + sd_noise*np.random.randn(n) # evaluate labels #Y a questo punto dipende dalla funzione
 
     if seed is not None:  # restore random seed
         np.random.set_state(state0)
@@ -209,8 +238,8 @@ def correlated(n=100, d=150, k=15, rho=0.5, amplitude=3.5, sigma=0.5,
         correlation level
     amplitude : float,  optional (default is `3.5`)
         amplitude of the generative linear model
-    sigma : float, optional (default is `0.5`)
-        Gaussian noise std
+    SNR : float, optional (default is `10`, STILL NOT IMPLEMENTED)
+        Signal to noise ratio - signal variance on noise variance - from this we can determine sigma noise
     normalized : bool, optional (default is `False`)
         if normalized is true than the data matrix is normalized as
         data/sqrt(n)
