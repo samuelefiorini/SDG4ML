@@ -156,7 +156,7 @@ def sparse(n=100, d=150, k=15, degree=1, func='l',
     return X, Y, beta
 
 
-def multitask(n=100, d=150, T=1, amplitude=3.5, sigma=0.5,
+def multitask(n=100, d=150, T=1, amplitude=3.5, sigma=1,
               normalized=False, seed=None, **kwargs):
     """Generate a multitask vector-valued regression (X,Y) problem.
 
@@ -176,7 +176,7 @@ def multitask(n=100, d=150, T=1, amplitude=3.5, sigma=0.5,
         number of tasks
     amplitude : float,  optional (default is `3.5`)
         amplitude of the generative linear model
-    sigma : float, optional (default is `0.5`)
+    sigma : float, optional (default is `1`)
         Gaussian noise std
     normalized : bool, optional (default is `False`)
         if normalized is true than the data matrix is normalized as
@@ -206,7 +206,7 @@ def multitask(n=100, d=150, T=1, amplitude=3.5, sigma=0.5,
     W = np.random.uniform(low=-np.abs(amplitude),
                           high=+np.abs(amplitude),
                           size=(d, T))
-    Y = np.dot(X, W) + np.random.randn(n, T)
+    Y = np.dot(X, W) + sigma * np.random.randn(n, T)
 
     if seed is not None:  # restore random seed
         np.random.set_state(state0)
